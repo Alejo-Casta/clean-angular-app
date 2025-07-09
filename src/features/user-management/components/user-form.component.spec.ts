@@ -1,3 +1,4 @@
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { UserFormComponent } from './user-form.component';
@@ -20,6 +21,7 @@ describe('UserFormComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [UserFormComponent, ReactiveFormsModule],
+      providers: [provideZonelessChangeDetection()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(UserFormComponent);

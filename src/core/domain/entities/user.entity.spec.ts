@@ -40,7 +40,7 @@ describe('User Entity', () => {
           validUserData.createdAt,
           validUserData.updatedAt,
         );
-      }).toThrow('Invalid email format');
+      }).toThrowError('Invalid email format');
     });
 
     it('should throw error for invalid first name', () => {
@@ -53,7 +53,7 @@ describe('User Entity', () => {
           validUserData.createdAt,
           validUserData.updatedAt,
         );
-      }).toThrow('First name must be at least 2 characters long');
+      }).toThrowError('First name must be at least 2 characters long');
     });
 
     it('should throw error for invalid last name', () => {
@@ -66,7 +66,7 @@ describe('User Entity', () => {
           validUserData.createdAt,
           validUserData.updatedAt,
         );
-      }).toThrow('Last name must be at least 2 characters long');
+      }).toThrowError('Last name must be at least 2 characters long');
     });
   });
 

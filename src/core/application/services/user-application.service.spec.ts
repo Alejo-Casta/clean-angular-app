@@ -1,9 +1,10 @@
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { UserApplicationService } from './user-application.service';
-import { IUserRepository } from '../../domain';
 import { USER_REPOSITORY_TOKEN } from '../../di/injection-tokens';
+import { IUserRepository } from '../../domain';
 import { User } from '../../domain/entities/user.entity';
+import { UserApplicationService } from './user-application.service';
 
 describe('UserApplicationService', () => {
   let service: UserApplicationService;
@@ -19,10 +20,12 @@ describe('UserApplicationService', () => {
       'getAll',
       'search',
       'getActiveUsersCount',
+      'existsByEmail',
     ]);
 
     TestBed.configureTestingModule({
       providers: [
+        provideZonelessChangeDetection(),
         UserApplicationService,
         {
           provide: USER_REPOSITORY_TOKEN,
