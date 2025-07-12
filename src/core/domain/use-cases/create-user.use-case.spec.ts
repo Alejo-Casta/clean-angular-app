@@ -1,7 +1,7 @@
 import { of, throwError } from 'rxjs';
-import { CreateUserUseCase } from './create-user.use-case';
-import { IUserRepository } from '../repositories/user.repository.interface';
 import { User } from '../entities/user.entity';
+import { IUserRepository } from '../repositories/user.repository.interface';
+import { CreateUserUseCase } from './create-user.use-case';
 
 describe('CreateUserUseCase', () => {
   let useCase: CreateUserUseCase;
@@ -72,7 +72,7 @@ describe('CreateUserUseCase', () => {
           ...validUserData,
           email: 'invalid-email',
         });
-      }).toThrow('Invalid email format');
+      }).toThrowError('Invalid email format');
     });
 
     it('should throw error for missing email', () => {
@@ -81,7 +81,7 @@ describe('CreateUserUseCase', () => {
           ...validUserData,
           email: '',
         });
-      }).toThrow('Email is required');
+      }).toThrowError('Email is required');
     });
 
     it('should throw error for missing first name', () => {
@@ -90,7 +90,7 @@ describe('CreateUserUseCase', () => {
           ...validUserData,
           firstName: '',
         });
-      }).toThrow('First name is required');
+      }).toThrowError('First name is required');
     });
 
     it('should throw error for missing last name', () => {
@@ -99,7 +99,7 @@ describe('CreateUserUseCase', () => {
           ...validUserData,
           lastName: '',
         });
-      }).toThrow('Last name is required');
+      }).toThrowError('Last name is required');
     });
 
     it('should throw error for short first name', () => {
@@ -108,7 +108,7 @@ describe('CreateUserUseCase', () => {
           ...validUserData,
           firstName: 'A',
         });
-      }).toThrow('First name must be at least 2 characters long');
+      }).toThrowError('First name must be at least 2 characters long');
     });
 
     it('should throw error for invalid first name characters', () => {
@@ -117,7 +117,7 @@ describe('CreateUserUseCase', () => {
           ...validUserData,
           firstName: 'John123',
         });
-      }).toThrow('First name can only contain letters and spaces');
+      }).toThrowError('First name can only contain letters and spaces');
     });
 
     it('should handle repository errors', (done) => {

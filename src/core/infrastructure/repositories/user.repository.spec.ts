@@ -1,7 +1,8 @@
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { UserRepository } from './user.repository';
 import { UserHttpService } from '../http/user-http.service';
+import { UserRepository } from './user.repository';
 
 describe('UserRepository', () => {
   let repository: UserRepository;
@@ -24,6 +25,7 @@ describe('UserRepository', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        provideZonelessChangeDetection(),
         UserRepository,
         {
           provide: UserHttpService,
