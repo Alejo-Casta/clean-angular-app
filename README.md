@@ -1,6 +1,6 @@
 # Clean Angular App - Clean Architecture Implementation
 
-A production-ready Angular 20 application demonstrating **Clean Architecture** principles with TypeScript, featuring a complete user management system that showcases proper separation of concerns between domain, application, infrastructure, and presentation layers.
+A production-ready Angular 20 application demonstrating **Clean Architecture** principles with TypeScript, featuring a complete user management system that showcases proper separation of concerns between domain, application, infrastructure, and presentation layers. The application integrates **PrimeNG** as the primary UI component library, providing a rich set of enterprise-grade components while maintaining clean architecture principles.
 
 ## 🏗️ Architecture Overview
 
@@ -45,27 +45,42 @@ src/
 
 ## 🚀 Quick Start
 
+> **New to the project?** Check out our comprehensive [Developer Setup Guide](./docs/DEVELOPER_SETUP.md) for detailed onboarding instructions.
+
 ### Prerequisites
 
 - **Node.js**: Version 18.19.0 or higher
-- **npm**: Version 9.0.0 or higher
+- **bun**: Version 1.1.0 or higher (recommended) or **npm**: Version 9.0.0 or higher
 - **Angular CLI**: Version 20.0.0 or higher
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd clean-angular-app
    ```
 
 2. **Install dependencies**
+
    ```bash
+   # Using bun (recommended)
+   bun install
+
+   # Or using npm
    npm install
    ```
 
+   > **Note**: This project includes **PrimeNG 20.0.0-rc.3** and all required dependencies pre-configured for Angular 20 compatibility.
+
 3. **Start the development server**
+
    ```bash
+   # Using bun
+   bun start
+
+   # Or using npm
    npm start
    ```
 
@@ -75,25 +90,68 @@ src/
 ### Available Scripts
 
 ```bash
-# Development
+# Development (using bun - recommended)
+bun start                    # Start development server
+bun run build               # Build for production
+bun run watch               # Build and watch for changes
+
+# Development (using npm)
 npm start                    # Start development server
 npm run build               # Build for production
 npm run watch               # Build and watch for changes
 
 # Testing
-npm test                    # Run unit tests
+bun test                    # Run unit tests (bun)
+npm test                    # Run unit tests (npm)
 
 # Code Quality
-npm run lint                # Run ESLint
-npm run lint:fix            # Fix ESLint issues
-npm run format              # Format code with Prettier
-npm run format:check        # Check code formatting
-npm run code-quality        # Run all quality checks
-npm run code-quality:fix    # Fix all quality issues
+bun run lint                # Run ESLint
+bun run lint:fix            # Fix ESLint issues
+bun run format              # Format code with Prettier
+bun run format:check        # Check code formatting
+bun run code-quality        # Run all quality checks
+bun run code-quality:fix    # Fix all quality issues
 
 # Server-Side Rendering
-npm run serve:ssr           # Serve SSR build
+bun run serve:ssr           # Serve SSR build
+npm run serve:ssr           # Serve SSR build (npm)
 ```
+
+## 🎨 UI Component Library Stack
+
+### PrimeNG Integration
+
+This application uses **PrimeNG 20.0.0-rc.3** as the primary UI component library, specifically chosen for:
+
+- **Angular 20 Compatibility**: Release candidate version ensuring compatibility with the latest Angular features
+- **Enterprise-Grade Components**: Comprehensive set of 100+ UI components for professional applications
+- **Clean Architecture Compliance**: Components are used only in the presentation layer, maintaining separation of concerns
+- **Zoneless Change Detection**: Fully compatible with Angular's experimental zoneless change detection
+- **Accessibility**: Built-in ARIA support and keyboard navigation
+- **Theming**: Extensive theming capabilities with multiple pre-built themes
+
+#### Key PrimeNG Features Available
+
+- **Form Components**: Input fields, dropdowns, date pickers, file uploads
+- **Data Components**: Tables, trees, data views with pagination and filtering
+- **Navigation**: Menus, breadcrumbs, tabs, and navigation bars
+- **Layout**: Panels, cards, dividers, and responsive grid system
+- **Overlay**: Dialogs, tooltips, confirmations, and popups
+- **Charts**: Integration with Chart.js for data visualization
+- **Icons**: PrimeIcons library with 250+ SVG icons
+
+#### Dependencies Included
+
+```json
+{
+  "primeng": "20.0.0-rc.3", // Main UI component library
+  "@angular/animations": "^20.0.0", // Required for PrimeNG animations
+  "@angular/cdk": "^20.0.3", // Angular Component Dev Kit
+  "primeicons": "^7.0.0" // Icon library
+}
+```
+
+For detailed component documentation, visit: [PrimeNG Documentation](https://primeng.org/)
 
 ## 🏛️ Clean Architecture Implementation
 
@@ -102,6 +160,7 @@ npm run serve:ssr           # Serve SSR build
 The **Domain Layer** contains the enterprise business rules and is the most stable layer.
 
 #### Entities
+
 Business objects that encapsulate enterprise-wide business rules:
 
 ```typescript
@@ -114,11 +173,11 @@ export class User {
     public readonly lastName: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    public readonly isActive: boolean = true
+    public readonly isActive: boolean = true,
   ) {
     this.validateEmail(email);
-    this.validateName(firstName, 'First name');
-    this.validateName(lastName, 'Last name');
+    this.validateName(firstName, "First name");
+    this.validateName(lastName, "Last name");
   }
 
   get fullName(): string {
@@ -126,15 +185,13 @@ export class User {
   }
 
   updateInfo(firstName: string, lastName: string): User {
-    return new User(
-      this.id, this.email, firstName, lastName,
-      this.createdAt, new Date(), this.isActive
-    );
+    return new User(this.id, this.email, firstName, lastName, this.createdAt, new Date(), this.isActive);
   }
 }
 ```
 
 #### Repository Interfaces
+
 Contracts that define how data should be accessed:
 
 ```typescript
@@ -153,11 +210,12 @@ export interface IUserRepository {
 The **Application Layer** orchestrates the flow of data to and from the use cases.
 
 #### Application Services
+
 Coordinate use cases and handle data transformation:
 
 ```typescript
 // src/core/application/services/user-application.service.ts
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class UserApplicationService {
   constructor(@Inject(USER_REPOSITORY_TOKEN) private userRepository: IUserRepository) {
     this.createUserUseCase = new CreateUserUseCase(userRepository);
@@ -166,14 +224,13 @@ export class UserApplicationService {
   }
 
   createUser(createUserDto: CreateUserDto): Observable<UserResponseDto> {
-    return this.createUserUseCase.execute(createUserDto).pipe(
-      map(user => this.mapUserToDto(user))
-    );
+    return this.createUserUseCase.execute(createUserDto).pipe(map((user) => this.mapUserToDto(user)));
   }
 }
 ```
 
 #### Data Transfer Objects (DTOs)
+
 Define the structure of data flowing between layers:
 
 ```typescript
@@ -201,32 +258,34 @@ export interface UserResponseDto {
 The **Infrastructure Layer** contains implementations of interfaces defined in the domain layer.
 
 #### Repository Implementations
+
 Concrete implementations of repository interfaces:
 
 ```typescript
 // src/core/infrastructure/repositories/user.repository.ts
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class UserRepository implements IUserRepository {
   constructor(private userHttpService: UserHttpService) {}
 
   getById(id: string): Observable<User | null> {
     return this.userHttpService.getUserById(id).pipe(
-      map(userData => userData ? this.mapToUser(userData) : null),
-      catchError(error => {
+      map((userData) => (userData ? this.mapToUser(userData) : null)),
+      catchError((error) => {
         if (error.status === 404) return of(null);
         return throwError(() => DomainErrorFactory.fromHttpError(error));
-      })
+      }),
     );
   }
 }
 ```
 
 #### HTTP Services
+
 Handle external API communication:
 
 ```typescript
 // src/core/infrastructure/http/user-http.service.ts
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class UserHttpService {
   constructor(private http: HttpClient) {}
 
@@ -241,26 +300,27 @@ export class UserHttpService {
 The **Presentation Layer** contains Angular-specific code and UI components.
 
 #### Components
+
 Angular components that handle user interaction:
 
 ```typescript
 // src/features/user-management/components/user-list.component.ts
 @Component({
-  selector: 'app-user-list',
+  selector: "app-user-list",
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './user-list.component.html'
+  templateUrl: "./user-list.component.html",
 })
 export class UserListComponent implements OnInit {
   constructor(
     private userApplicationService: UserApplicationService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {}
 
   loadUsers(): void {
     this.userApplicationService.getUsers(this.queryParams).subscribe({
-      next: (response) => this.users = response.users,
-      error: (error) => this.handleError(error)
+      next: (response) => (this.users = response.users),
+      error: (error) => this.handleError(error),
     });
   }
 }
@@ -275,11 +335,11 @@ The application uses Angular's DI system to implement the Dependency Inversion P
 export const coreProviders: Provider[] = [
   {
     provide: USER_REPOSITORY_TOKEN,
-    useClass: environment.useMockData ? UserMockRepository : UserRepository
+    useClass: environment.useMockData ? UserMockRepository : UserRepository,
   },
   {
     provide: ErrorHandler,
-    useClass: GlobalErrorHandlerService
+    useClass: GlobalErrorHandlerService,
   },
   // ... other providers
 ];
@@ -290,23 +350,24 @@ export const coreProviders: Provider[] = [
 The clean architecture makes testing straightforward by allowing each layer to be tested in isolation.
 
 ### Domain Layer Tests
+
 Test business logic without external dependencies:
 
 ```typescript
-describe('CreateUserUseCase', () => {
+describe("CreateUserUseCase", () => {
   let useCase: CreateUserUseCase;
   let mockRepository: jasmine.SpyObj<IUserRepository>;
 
   beforeEach(() => {
-    mockRepository = jasmine.createSpyObj('IUserRepository', ['existsByEmail', 'create']);
+    mockRepository = jasmine.createSpyObj("IUserRepository", ["existsByEmail", "create"]);
     useCase = new CreateUserUseCase(mockRepository);
   });
 
-  it('should create user when email does not exist', () => {
+  it("should create user when email does not exist", () => {
     mockRepository.existsByEmail.and.returnValue(of(false));
     mockRepository.create.and.returnValue(of(expectedUser));
 
-    useCase.execute(validUserData).subscribe(user => {
+    useCase.execute(validUserData).subscribe((user) => {
       expect(user).toBe(expectedUser);
     });
   });
@@ -323,6 +384,7 @@ npm run test:coverage       # Run tests with coverage report
 ## 📋 Features Demonstrated
 
 ### User Management System
+
 Complete CRUD operations for user management:
 
 - **List Users**: Paginated list with search and filtering
@@ -332,7 +394,10 @@ Complete CRUD operations for user management:
 - **Delete User**: Soft delete with confirmation
 
 ### Technical Features
+
 - **Clean Architecture**: Proper separation of concerns
+- **PrimeNG Integration**: Enterprise-grade UI components with Angular 20 compatibility
+- **Zoneless Change Detection**: Modern Angular performance optimization
 - **Dependency Injection**: Configurable implementations
 - **Error Handling**: Domain-specific error handling
 - **Validation**: Business rule validation in entities
@@ -340,6 +405,7 @@ Complete CRUD operations for user management:
 - **Type Safety**: Full TypeScript implementation
 - **Testing**: Comprehensive unit test coverage
 - **Code Quality**: ESLint and Prettier configuration
+- **Package Management**: Bun support for faster dependency management
 
 ## 🛠️ Development Guidelines
 
@@ -394,25 +460,44 @@ npm run serve:ssr           # Serve with SSR
 
 ## 📚 Additional Resources
 
+### Architecture & Development
+
+- [Developer Setup Guide](./docs/DEVELOPER_SETUP.md) - Complete onboarding guide for new team members
+- [Project Architecture Documentation](./docs/ARCHITECTURE.md) - Detailed clean architecture implementation
+- [Development Workflow Guide](./docs/DEVELOPMENT.md) - Git workflow and development guidelines
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Angular Documentation](https://angular.dev/)
 - [RxJS Documentation](https://rxjs.dev/)
 - [TypeScript Documentation](https://www.typescriptlang.org/)
 
+### UI Components & Design
+
+- [PrimeNG Documentation](https://primeng.org/) - Complete component library documentation
+- [PrimeNG Showcase](https://primeng.org/showcase) - Live examples and demos
+- [PrimeIcons](https://primeng.org/icons) - Icon library documentation
+- [PrimeNG Themes](https://primeng.org/theming) - Theming and customization guide
+
+### Package Management
+
+- [Bun Documentation](https://bun.sh/docs) - Fast JavaScript runtime and package manager
+
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Follow the established architecture patterns
+2. Create a feature branch following our [branching strategy](./docs/DEVELOPMENT.md#git-branching-strategy)
+3. Follow the established [clean architecture patterns](./docs/ARCHITECTURE.md)
 4. Write tests for new functionality
 5. Ensure code quality checks pass
 6. Submit a pull request
+
+For detailed development guidelines, see [Development Documentation](./docs/DEVELOPMENT.md).
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 #### Use Cases
+
 Application-specific business rules:
 
 ```typescript
@@ -422,14 +507,14 @@ export class CreateUserUseCase {
 
   execute(userData: CreateUserData): Observable<User> {
     this.validateUserData(userData);
-    
+
     return this.userRepository.existsByEmail(userData.email).pipe(
-      switchMap(exists => {
+      switchMap((exists) => {
         if (exists) {
-          return throwError(() => new Error('User already exists'));
+          return throwError(() => new Error("User already exists"));
         }
         return this.userRepository.create(userData);
-      })
+      }),
     );
   }
 }

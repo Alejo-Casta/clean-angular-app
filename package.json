@@ -1,6 +1,15 @@
 {
   "name": "clean-angular-app",
   "version": "0.0.0",
+  "description": "A production-ready Angular 20 application demonstrating Clean Architecture principles with PrimeNG UI components, featuring zoneless change detection and comprehensive user management system.",
+  "keywords": [
+    "angular",
+    "clean-architecture",
+    "primeng",
+    "typescript",
+    "zoneless",
+    "enterprise"
+  ],
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -27,6 +36,8 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "^20.0.0",
+    "@angular/cdk": "^20.0.3",
     "@angular/common": "^20.0.0",
     "@angular/compiler": "^20.0.0",
     "@angular/core": "^20.0.0",
@@ -36,6 +47,8 @@
     "@angular/router": "^20.0.0",
     "@angular/ssr": "^20.0.5",
     "express": "^5.1.0",
+    "primeicons": "^7.0.0",
+    "primeng": "20.0.0-rc.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

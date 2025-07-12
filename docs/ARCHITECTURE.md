@@ -2,11 +2,12 @@
 
 ## Overview
 
-This document provides a detailed explanation of the Clean Architecture implementation in this Angular application.
+This document provides a detailed explanation of the Clean Architecture implementation in this Angular 20 application, featuring PrimeNG UI components and zoneless change detection. The architecture maintains strict separation of concerns while integrating modern Angular features and enterprise-grade UI components.
 
 ## Architecture Principles
 
 ### 1. Dependency Rule
+
 Dependencies can only point inward. Source code dependencies must point only toward higher-level policies.
 
 ```
@@ -17,14 +18,16 @@ Infrastructure Layer → Domain Layer
 ### 2. Layer Responsibilities
 
 #### Domain Layer (Core Business Logic)
+
 - **Entities**: Enterprise business rules
-- **Use Cases**: Application business rules  
+- **Use Cases**: Application business rules
 - **Repository Interfaces**: Data access contracts
 - **Domain Errors**: Business-specific exceptions
 
 **Dependencies**: None (pure business logic)
 
 #### Application Layer (Application Business Rules)
+
 - **Application Services**: Orchestrate use cases
 - **DTOs**: Data transfer objects
 - **Error Handling**: Application-level error management
@@ -32,6 +35,7 @@ Infrastructure Layer → Domain Layer
 **Dependencies**: Domain Layer only
 
 #### Infrastructure Layer (External Concerns)
+
 - **Repository Implementations**: Data access implementations
 - **HTTP Services**: External API communication
 - **External Services**: Third-party integrations
@@ -39,16 +43,107 @@ Infrastructure Layer → Domain Layer
 **Dependencies**: Domain Layer interfaces
 
 #### Presentation Layer (UI and Framework)
-- **Components**: Angular UI components
+
+- **Components**: Angular UI components with PrimeNG integration
 - **Services**: UI-specific services
 - **Guards**: Route protection
 - **Interceptors**: HTTP request/response handling
+- **UI Components**: PrimeNG components for consistent enterprise UI
 
-**Dependencies**: Application Layer services
+**Dependencies**: Application Layer services, PrimeNG components (presentation layer only)
+
+## UI Architecture & PrimeNG Integration
+
+### PrimeNG in Clean Architecture
+
+PrimeNG components are strictly contained within the **Presentation Layer**, maintaining clean architecture principles:
+
+#### Design Decisions
+
+- **Version**: PrimeNG 20.0.0-rc.3 for Angular 20 compatibility
+- **Scope**: UI components only, no business logic dependencies
+- **Integration**: Components use application services for data operations
+- **Theming**: Centralized theme configuration in presentation layer
+
+#### Component Integration Pattern
+
+```typescript
+@Component({
+  selector: "app-user-list",
+  standalone: true,
+  imports: [CommonModule, TableModule, ButtonModule, DialogModule],
+  template: `
+    <p-table [value]="users" [loading]="loading">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td>{{ user.fullName }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <p-button (onClick)="editUser(user.id)" label="Edit"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  `,
+})
+export class UserListComponent {
+  constructor(private userApplicationService: UserApplicationService) {}
+
+  editUser(id: string): void {
+    // Business logic handled by application service
+    this.userApplicationService.getUserById(id).subscribe(/* ... */);
+  }
+}
+```
+
+#### Benefits of PrimeNG Integration
+
+- **Consistency**: Enterprise-grade UI components across the application
+- **Accessibility**: Built-in ARIA support and keyboard navigation
+- **Performance**: Optimized components with virtual scrolling and lazy loading
+- **Maintainability**: Standardized component library reduces custom UI code
+- **Clean Separation**: UI components don't contain business logic
+
+### Zoneless Change Detection
+
+This application uses Angular's experimental zoneless change detection for improved performance:
+
+#### Configuration
+
+```typescript
+// src/app/app.config.ts
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideZonelessChangeDetection(), // Zoneless change detection
+    // ... other providers
+  ],
+};
+```
+
+#### Benefits with PrimeNG
+
+- **Performance**: Reduced change detection cycles
+- **Compatibility**: PrimeNG 20.0.0-rc.3 fully supports zoneless mode
+- **Predictability**: Explicit change detection triggers
+- **Modern Angular**: Leverages latest Angular performance optimizations
+
+#### Implementation Considerations
+
+- **Manual Change Detection**: Components trigger change detection explicitly
+- **Signal Integration**: Ready for Angular Signals when stable
+- **Event Handling**: PrimeNG events work seamlessly with zoneless mode
 
 ## Data Flow
 
 ### Request Flow (User Action → Business Logic → Data)
+
 1. **User Interaction**: User clicks button in component
 2. **Component**: Calls application service method
 3. **Application Service**: Orchestrates use case execution
@@ -57,6 +152,7 @@ Infrastructure Layer → Domain Layer
 6. **HTTP Service**: Makes API call to external service
 
 ### Response Flow (Data → Business Logic → UI)
+
 1. **HTTP Service**: Receives API response
 2. **Repository Implementation**: Maps data to domain entities
 3. **Use Case**: Applies business rules to entities
@@ -66,16 +162,18 @@ Infrastructure Layer → Domain Layer
 ## Error Handling Strategy
 
 ### Domain Errors
+
 Business rule violations are handled at the domain level:
 
 ```typescript
 export class UserAlreadyExistsError extends DomainError {
-  readonly code = 'USER_ALREADY_EXISTS';
-  readonly userMessage = 'A user with this email already exists';
+  readonly code = "USER_ALREADY_EXISTS";
+  readonly userMessage = "A user with this email already exists";
 }
 ```
 
 ### Error Propagation
+
 Errors flow through the layers maintaining context:
 
 1. **Infrastructure**: HTTP errors → Domain errors
@@ -87,21 +185,25 @@ Errors flow through the layers maintaining context:
 ### Unit Testing by Layer
 
 #### Domain Layer Tests
+
 - Test business logic in isolation
 - Mock repository interfaces
 - Focus on business rule validation
 
 #### Application Layer Tests
+
 - Test use case orchestration
 - Mock repository implementations
 - Verify DTO transformations
 
 #### Infrastructure Layer Tests
+
 - Test data access implementations
 - Mock HTTP services
 - Verify error handling
 
 #### Presentation Layer Tests
+
 - Test component behavior
 - Mock application services
 - Verify user interactions
@@ -109,6 +211,7 @@ Errors flow through the layers maintaining context:
 ## Dependency Injection
 
 ### Interface-Based DI
+
 Use injection tokens for interfaces:
 
 ```typescript
@@ -122,6 +225,7 @@ export const USER_REPOSITORY_TOKEN = new InjectionToken<IUserRepository>('UserRe
 ```
 
 ### Benefits
+
 - **Testability**: Easy to mock dependencies
 - **Flexibility**: Switch implementations via configuration
 - **Maintainability**: Loose coupling between layers
@@ -129,26 +233,31 @@ export const USER_REPOSITORY_TOKEN = new InjectionToken<IUserRepository>('UserRe
 ## Best Practices
 
 ### 1. Keep Domain Pure
+
 - No framework dependencies in domain layer
 - Business logic independent of external concerns
 - Entities contain business rules and validation
 
 ### 2. Use Interfaces for Contracts
+
 - Define repository interfaces in domain layer
 - Implement interfaces in infrastructure layer
 - Depend on abstractions, not concretions
 
 ### 3. Separate Concerns
+
 - Each layer has a single responsibility
 - Cross-cutting concerns handled by shared services
 - Clear boundaries between layers
 
 ### 4. Error Handling
+
 - Domain-specific errors for business rule violations
 - Consistent error handling across layers
 - User-friendly error messages in presentation layer
 
 ### 5. Testing
+
 - Test each layer in isolation
 - Mock external dependencies
 - Focus on business logic testing
@@ -156,6 +265,7 @@ export const USER_REPOSITORY_TOKEN = new InjectionToken<IUserRepository>('UserRe
 ## Common Patterns
 
 ### Repository Pattern
+
 Encapsulates data access logic:
 
 ```typescript
@@ -166,6 +276,7 @@ interface IUserRepository {
 ```
 
 ### Use Case Pattern
+
 Encapsulates application-specific business rules:
 
 ```typescript
@@ -177,6 +288,7 @@ class CreateUserUseCase {
 ```
 
 ### DTO Pattern
+
 Data transfer between layers:
 
 ```typescript
@@ -190,21 +302,25 @@ interface UserResponseDto {
 ## Benefits of This Architecture
 
 ### 1. Testability
+
 - Business logic can be tested without UI or database
 - Easy to mock dependencies
 - Fast unit tests
 
 ### 2. Maintainability
+
 - Clear separation of concerns
 - Changes in one layer don't affect others
 - Easy to understand and modify
 
 ### 3. Flexibility
+
 - Can change UI framework without affecting business logic
 - Can switch data sources without changing business rules
 - Easy to add new features
 
 ### 4. Scalability
+
 - Well-organized code structure
 - Easy to add new features and modules
 - Clear guidelines for development team
@@ -220,6 +336,7 @@ interface UserResponseDto {
 5. **Add Error Handling**: Implement domain-specific error handling
 
 ### Gradual Migration
+
 - Start with new features using clean architecture
 - Gradually refactor existing features
 - Maintain backward compatibility during transition
