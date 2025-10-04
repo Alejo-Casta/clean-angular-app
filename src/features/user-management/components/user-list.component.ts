@@ -1,16 +1,34 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
+
+// PrimeNG imports
+
+// Shared UI components
 
 // Application layer imports
-import { UserApplicationService } from '../../../core/application';
-import { UserResponseDto, UserListQueryDto } from '../../../core/application';
+import {
+  UserApplicationService,
+  UserListQueryDto,
+  UserResponseDto,
+} from '../../../core/application';
 
 // Shared services
-import { NotificationService } from '../../../shared/services/notification.service';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { PaginatorModule } from 'primeng/paginator';
+
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import {
+  ConfirmDialogService,
+  DropdownComponent,
+} from '../../../shared/components/ui';
 import { LoadingService } from '../../../shared/services/loading.service';
+import { NotificationService } from '../../../shared/services/notification.service';
 
 /**
  * User List Component
@@ -19,42 +37,54 @@ import { LoadingService } from '../../../shared/services/loading.service';
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TableModule,
+    InputTextModule,
+
+    ButtonModule,
+    TagModule,
+    TooltipModule,
+    PaginatorModule,
+    DropdownComponent,
+  ],
   template: `
     <div class="user-list-container">
       <div class="header">
         <h2>User Management</h2>
-        <button
-          class="btn btn-primary"
-          (click)="navigateToCreate()"
+        <p-button
+          label="Add New User"
+          icon="pi pi-plus"
+          (onClick)="navigateToCreate()"
           [disabled]="loadingService.isLoading"
-        >
-          Add New User
-        </button>
+        ></p-button>
       </div>
 
       <!-- Search and Filters -->
       <div class="filters">
         <div class="search-box">
-          <input
-            type="text"
-            placeholder="Search users..."
-            [(ngModel)]="searchQuery"
-            (input)="onSearchChange()"
-            class="form-control"
-          />
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              placeholder="Search users..."
+              [(ngModel)]="searchQuery"
+              (input)="onSearchChange()"
+              class="w-full"
+            />
+          </span>
         </div>
 
         <div class="filter-controls">
-          <select
+          <app-dropdown
             [(ngModel)]="activeFilter"
-            (change)="onFilterChange()"
-            class="form-control"
-          >
-            <option value="">All Users</option>
-            <option value="true">Active Users</option>
-            <option value="false">Inactive Users</option>
-          </select>
+            [options]="filterOptions"
+            (selectionChange)="onFilterChange()"
+            placeholder="Filter by status"
+            class="w-full"
+          ></app-dropdown>
         </div>
       </div>
 
@@ -64,221 +94,236 @@ import { LoadingService } from '../../../shared/services/loading.service';
       </div>
 
       <!-- User Table -->
-      <div *ngIf="!loadingService.isLoading" class="user-table">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let user of users" [class.inactive]="!user.isActive">
-              <td>{{ user.fullName }}</td>
-              <td>{{ user.email }}</td>
-              <td>
-                <span
-                  [class]="user.isActive ? 'status-active' : 'status-inactive'"
-                >
-                  {{ user.isActive ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td>{{ formatDate(user.createdAt) }}</td>
-              <td class="actions">
-                <button
-                  class="btn btn-sm btn-secondary"
-                  (click)="viewUser(user.id)"
-                  title="View"
-                >
-                  View
-                </button>
-                <button
-                  class="btn btn-sm btn-primary"
-                  (click)="editUser(user.id)"
-                  title="Edit"
-                >
-                  Edit
-                </button>
-                <button
-                  class="btn btn-sm btn-danger"
-                  (click)="deleteUser(user)"
+      <p-table
+        [value]="users"
+        [loading]="loadingService.isLoading"
+        [rows]="pageSize"
+        [totalRecords]="totalUsers"
+        [lazy]="true"
+        [paginator]="true"
+        [rowsPerPageOptions]="[5, 10, 20, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        [tableStyle]="{ 'min-width': '50rem' }"
+        (onLazyLoad)="onLazyLoad($event)"
+        styleClass="p-datatable-gridlines"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="fullName">
+              Name <p-sortIcon field="fullName"></p-sortIcon>
+            </th>
+            <th pSortableColumn="email">
+              Email <p-sortIcon field="email"></p-sortIcon>
+            </th>
+            <th pSortableColumn="isActive">
+              Status <p-sortIcon field="isActive"></p-sortIcon>
+            </th>
+            <th pSortableColumn="createdAt">
+              Created <p-sortIcon field="createdAt"></p-sortIcon>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-user>
+          <tr [class.inactive-row]="!user.isActive">
+            <td>{{ user.fullName }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <p-tag
+                [value]="user.isActive ? 'Active' : 'Inactive'"
+                [severity]="user.isActive ? 'success' : 'danger'"
+              ></p-tag>
+            </td>
+            <td>{{ formatDate(user.createdAt) }}</td>
+            <td>
+              <div class="flex gap-2">
+                <p-button
+                  icon="pi pi-eye"
+                  size="small"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="viewUser(user.id)"
+                  pTooltip="View user"
+                ></p-button>
+                <p-button
+                  icon="pi pi-pencil"
+                  size="small"
+                  severity="info"
+                  [text]="true"
+                  (onClick)="editUser(user.id)"
+                  pTooltip="Edit user"
+                ></p-button>
+                <p-button
+                  icon="pi pi-trash"
+                  size="small"
+                  severity="danger"
+                  [text]="true"
                   [disabled]="!user.isActive"
-                  title="Delete"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  (onClick)="deleteUser(user)"
+                  pTooltip="Delete user"
+                ></p-button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
 
-        <!-- Empty State -->
-        <div *ngIf="users.length === 0" class="empty-state">
-          <p>No users found.</p>
-        </div>
-      </div>
-
-      <!-- Pagination -->
-      <div *ngIf="totalPages > 1" class="pagination">
-        <button
-          class="btn btn-outline-primary"
-          [disabled]="currentPage === 1"
-          (click)="goToPage(currentPage - 1)"
-        >
-          Previous
-        </button>
-
-        <span class="page-info">
-          Page {{ currentPage }} of {{ totalPages }} ({{ totalUsers }} total)
-        </span>
-
-        <button
-          class="btn btn-outline-primary"
-          [disabled]="currentPage === totalPages"
-          (click)="goToPage(currentPage + 1)"
-        >
-          Next
-        </button>
-      </div>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center">
+              <div class="empty-state">
+                <i
+                  class="pi pi-users"
+                  style="font-size: 3rem; color: var(--text-color-secondary)"
+                ></i>
+                <p>No users found.</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
   `,
   styles: [
     `
       .user-list-container {
-        padding: 20px;
+        padding: 1.5rem;
       }
 
       .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 1.5rem;
+      }
+
+      .header h2 {
+        margin: 0;
+        color: var(--text-color);
       }
 
       .filters {
         display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        align-items: end;
       }
 
       .search-box {
         flex: 1;
+        max-width: 300px;
       }
 
       .filter-controls {
-        min-width: 150px;
-      }
-
-      .form-control {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
-      }
-
-      .table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-      }
-
-      .table th,
-      .table td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-      }
-
-      .table th {
-        background-color: #f8f9fa;
-        font-weight: 600;
-      }
-
-      .table tr.inactive {
-        opacity: 0.6;
-      }
-
-      .status-active {
-        color: #28a745;
-        font-weight: 500;
-      }
-
-      .status-inactive {
-        color: #dc3545;
-        font-weight: 500;
-      }
-
-      .actions {
-        display: flex;
-        gap: 8px;
-      }
-
-      .btn {
-        padding: 6px 12px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        text-decoration: none;
-        display: inline-block;
-      }
-
-      .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      .btn-primary {
-        background-color: #007bff;
-        color: white;
-      }
-
-      .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-      }
-
-      .btn-danger {
-        background-color: #dc3545;
-        color: white;
-      }
-
-      .btn-outline-primary {
-        background-color: transparent;
-        color: #007bff;
-        border: 1px solid #007bff;
-      }
-
-      .btn-sm {
-        padding: 4px 8px;
-        font-size: 12px;
-      }
-
-      .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-      }
-
-      .page-info {
-        font-size: 14px;
-        color: #666;
+        min-width: 200px;
       }
 
       .loading {
         text-align: center;
-        padding: 40px;
-        color: #666;
+        padding: 3rem;
+        color: var(--text-color-secondary);
+        font-size: 1.1rem;
       }
 
       .empty-state {
         text-align: center;
-        padding: 40px;
-        color: #666;
+        padding: 3rem;
+        color: var(--text-color-secondary);
+      }
+
+      .empty-state i {
+        display: block;
+        margin-bottom: 1rem;
+      }
+
+      .empty-state p {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      /* PrimeNG table customizations */
+      :host ::ng-deep .p-datatable {
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      :host ::ng-deep .p-datatable .p-datatable-header {
+        background: var(--surface-50);
+        border: 1px solid var(--surface-200);
+      }
+
+      :host ::ng-deep .p-datatable .p-datatable-tbody > tr.inactive-row {
+        opacity: 0.6;
+      }
+
+      :host ::ng-deep .p-datatable .p-datatable-tbody > tr.inactive-row td {
+        color: var(--text-color-secondary);
+      }
+
+      /* Action buttons styling */
+      :host ::ng-deep .p-button.p-button-text {
+        padding: 0.375rem;
+        margin: 0 0.125rem;
+      }
+
+      /* Search input styling */
+      :host ::ng-deep .p-input-icon-left > .p-inputtext {
+        padding-left: 2.5rem;
+      }
+
+      :host ::ng-deep .p-input-icon-left > i {
+        left: 0.75rem;
+        color: var(--text-color-secondary);
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .user-list-container {
+          padding: 1rem;
+        }
+
+        .header {
+          flex-direction: column;
+          gap: 1rem;
+          align-items: stretch;
+        }
+
+        .filters {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .search-box,
+        .filter-controls {
+          max-width: none;
+          min-width: auto;
+        }
+
+        :host ::ng-deep .p-datatable .p-datatable-tbody td {
+          padding: 0.5rem;
+        }
+
+        :host ::ng-deep .p-button.p-button-text {
+          padding: 0.25rem;
+        }
+      }
+
+      /* Utility classes */
+      .flex {
+        display: flex;
+      }
+
+      .gap-2 {
+        gap: 0.5rem;
+      }
+
+      .w-full {
+        width: 100%;
+      }
+
+      .text-center {
+        text-align: center;
       }
     `,
   ],
@@ -292,6 +337,12 @@ export class UserListComponent implements OnInit, OnDestroy {
   searchQuery = '';
   activeFilter = '';
 
+  filterOptions = [
+    { label: 'All Users', value: '' },
+    { label: 'Active Users', value: 'true' },
+    { label: 'Inactive Users', value: 'false' },
+  ];
+
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
 
@@ -300,6 +351,7 @@ export class UserListComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     public loadingService: LoadingService,
     private router: Router,
+    private confirmDialogService: ConfirmDialogService,
   ) {
     // Setup search debouncing
     this.searchSubject
@@ -362,6 +414,22 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Handle PrimeNG table lazy loading events
+   */
+  onLazyLoad(event: any): void {
+    // Update pagination
+    this.currentPage = Math.floor(event.first / event.rows) + 1;
+    this.pageSize = event.rows;
+
+    // Handle sorting (if implemented in backend)
+    // const sortField = event.sortField;
+    // const sortOrder = event.sortOrder; // 1 for asc, -1 for desc
+
+    // Reload data with new parameters
+    this.loadUsers();
+  }
+
+  /**
    * Navigate to specific page
    */
   goToPage(page: number): void {
@@ -396,27 +464,32 @@ export class UserListComponent implements OnInit, OnDestroy {
    * Delete user (soft delete)
    */
   deleteUser(user: UserResponseDto): void {
-    if (confirm(`Are you sure you want to delete ${user.fullName}?`)) {
-      this.userApplicationService
-        .deleteUser(user.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.notificationService.showSuccess(
-              'Success',
-              'User deleted successfully',
-            );
-            this.loadUsers();
-          },
-          error: (error) => {
-            console.error('Error deleting user:', error);
-            this.notificationService.showError(
-              'Error',
-              'Failed to delete user',
-            );
-          },
-        });
-    }
+    this.confirmDialogService
+      .confirmDelete(user.fullName)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.userApplicationService
+            .deleteUser(user.id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: () => {
+                this.notificationService.showSuccess(
+                  'Success',
+                  'User deleted successfully',
+                );
+                this.loadUsers();
+              },
+              error: (error) => {
+                console.error('Error deleting user:', error);
+                this.notificationService.showError(
+                  'Error',
+                  'Failed to delete user',
+                );
+              },
+            });
+        }
+      });
   }
 
   /**
